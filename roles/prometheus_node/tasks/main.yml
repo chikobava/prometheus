@@ -1,0 +1,86 @@
+- name: Download node-exporter
+  local_action: get_url
+    url="{{ nodexp_download_url }}"
+    dest="{{ nodexp_download_dir }}"
+    checksum="{{ nodexp_download_checksum }}"
+
+- name: Create folder to unpack node-exporter
+  local_action: file
+    path="{{ nodexp_extract_folder }}"
+    state="directory"
+
+- name: Unpack node-exporter
+  local_action: command tar -xf "{{ nodexp_download_dir }}" -C "{{ nodexp_extract_folder }}" --strip-components=1 --overwrite
+
+- name: Create node-exporter bin directory
+  become: true
+  file:
+    path: "{{ nodexp_bin_dir }}"
+    state: directory
+
+- name: Create node-exporter configuration directory
+  become: true
+  file:
+    path: "{{ nodexp_conf_dir }}"
+    state: directory
+
+- name: Ensure that all necessary bindings for python are installed (only for Fedora)
+  become: true
+  dnf:
+    state: latest
+    name: "{{ item }}"
+  with_items:
+    - libselinux-python
+    - python-firewall
+  when: ansible_distribution == "Fedora"
+
+- name: Copy node-exporter to remote host
+  become: true
+  copy:
+    src: "{{ nodexp_extract_folder }}/"
+    dest: "{{ nodexp_bin_dir }}"
+    owner: "root"
+    group:  "root"
+    mode: "u=rwx,g=rwx,o=r"
+
+- name: Copy node-exporter service definition
+  become: true
+  template:
+    src: "node-exporter.service.j2"
+    dest: "{{ nodexp_service_dir }}/{{ nodexp_service_name }}"
+    owner: root
+    group: root
+    mode: "u=rw,g=r,o=r"
+  tags:
+    - prometheus_node_update_config
+
+- name: Copy template for textfile collector
+  become: true
+  template:
+    src: "facts.prom.j2"
+    dest: "{{ nodexp_conf_dir }}/facts.prom"
+    owner: root
+    group: root
+    mode: "u=rw,g=r,o=r"
+  tags:
+    - prometheus_node_update_config
+    - prometheus_server_update_config
+
+- name: Reload node-exporter service definition
+  become: True
+  systemd:
+    name: "{{ nodexp_service_name }}"
+    state: restarted
+    enabled: True
+    daemon_reload: yes
+  tags:
+    - prometheus_node_update_config
+
+- name: Enable firewall ports for the node-exporter service
+  become: true
+  ignore_errors: yes
+  firewalld:
+    immediate: true
+    port: 9100/tcp
+    permanent: true
+    state: enabled

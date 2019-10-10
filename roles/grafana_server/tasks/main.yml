@@ -1,0 +1,153 @@
+- name: Copy Grafana repository definition
+  become: true
+  copy:
+    src: "files/grafana.repo"
+    dest: "{{ grafana_repo_dir }}"
+    owner: root
+    group: root
+    mode: "u=rw,g=r,o=r"
+
+- name: Ensure that all necessary bindings for python are installed (only for Fedora)
+  become: true
+  dnf:
+    state: latest
+    name: "{{ item }}"
+  with_items:
+    - libselinux-python
+    - python-firewall
+  when: ansible_distribution == "Fedora"
+
+- name: Install Grafana
+  become: true
+  dnf:
+    name: grafana
+    state: latest
+  when: ansible_distribution == "Fedora"
+
+- name: Install Grafana
+  become: true
+  yum:
+    name: grafana
+    state: latest
+  when: ansible_distribution == "CentOS"
+
+- name: Ensure grafana configuration directories exist
+  become: true
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+    - "{{ grafana_conf_dir }}"
+    - "{{ grafana_conf_dir }}/datasources"
+
+- name: Copy the template
+  become: true
+  template:
+    src: grafana.ini.j2
+    dest: "{{ grafana_conf_dir }}/grafana.ini"
+    owner: root
+    group: grafana
+    mode: 0640
+  no_log: true
+
+- name: Create folder for custom dashboards
+  become: true
+  file:
+    path: "{{ grafana_home_dir }}/dashboards"
+    state: "directory"
+    owner: grafana
+    group: grafana
+    mode: "u=rwx,g=rwx,o=r"
+  
+- name: Enable Grafana
+  become: true
+  systemd:
+    daemon_reload: yes
+    name: grafana-server
+    state: restarted
+    enabled: True
+
+- name: Wait for Grafana server to start
+  wait_for:
+    port: "{{grafana_port}}"
+    delay: 5
+
+- name: Check whether Prometheus datasource exists
+  uri:
+    url: http://localhost:{{grafana_port}}/api/datasources/name/Prometheus
+    user: "{{ grafana_webinterface_user }}"
+    password: "{{ grafana_webinterface_user_password }}"
+    force_basic_auth: yes
+  register: grafana_prometheus
+  failed_when: false
+  changed_when: false
+  tags:
+    - grafana_server_update_config
+   
+- name: Enable Prometheus datasource
+  uri:
+    url: http://localhost:{{grafana_port}}/api/datasources
+    method: POST
+    user: "{{ grafana_webinterface_user }}"
+    password: "{{ grafana_webinterface_user_password }}"
+    body:
+      name: "Prometheus"
+      type: "prometheus"
+      url: "http://localhost:9090"
+      access: "proxy"
+      isDefault: true
+    force_basic_auth: yes
+    status_code: 200
+    body_format: json
+  when: grafana_prometheus.status != 200
+  tags:
+    - grafana_server_update_config
+
+- name: Add standard dashboards through grafana API
+  uri:
+    url: http://localhost:{{grafana_port}}/api/dashboards/db
+    method: POST
+    user: "{{ grafana_webinterface_user }}"
+    password: "{{ grafana_webinterface_user_password }}"
+    body: "{{ lookup('template','{{ item }}') }}"
+    status_code: 200
+    body_format: json
+    force_basic_auth: yes
+    headers: 
+      Content-Type: "application/json;charset=UTF-8"
+  with_fileglob:
+    - "dashboards/*.j2"
+  tags:
+    - grafana_server_update_config
+
+- name: gather facts about the systems
+  setup: filter=ansible_local
+  when: groups['prom_nvidia_nodes'] is defined and (groups['prom_nvidia_nodes']|length>0)
+
+- name: Add nvidia dashboards through grafana API, nvidia group must be not empty
+  uri:
+    url: http://localhost:{{grafana_port}}/api/dashboards/db
+    method: POST
+    user: "{{ grafana_webinterface_user }}"
+    password: "{{ grafana_webinterface_user_password }}"
+    body: "{{ lookup('template','{{ item }}') }}"
+    status_code: 200
+    body_format: json
+    force_basic_auth: yes
+    headers:
+      Content-Type: "application/json;charset=UTF-8"
+  with_fileglob:
+    - "nvidia_dashboards/*.j2"
+  tags:
+    - grafana_server_update_config
+  when: groups['prom_nvidia_nodes'] is defined and (groups['prom_nvidia_nodes']|length>0)
+
+- name: Enable firewall port
+  become: true
+  ignore_errors: true
+  firewalld:
+    immediate: true
+    port: "{{ grafana_port }}/tcp"
+    permanent: true
+    state: enabled
+  notify: restart grafana service

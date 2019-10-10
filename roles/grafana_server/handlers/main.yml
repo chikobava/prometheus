@@ -1,0 +1,6 @@
+- name: restart grafana service
+  become: True
+  systemd: 
+    name: "{{ grafana_service_name }}"
+    state: restarted
+    enabled: True

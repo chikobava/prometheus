@@ -1,0 +1,36 @@
+- name: Remove conflicting packages
+  become: true
+  package:
+    name: "{{ item }}"
+    state: absent
+  with_items:
+    - postfix
+    - sendmail
+
+- name: Install required packages
+  become: true
+  package:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - ssmtp
+    - mailx
+
+- name: Copy the ssmtp service configuration
+  become: true
+  template:
+    src: "ssmtp.conf.j2"
+    dest: "/etc/ssmtp/ssmtp.conf"
+    owner: "root"
+    group: "mail"
+    mode: "u=rw,g=r"
+
+- name: Copy the ssmtp service aliases configuration
+  become: true
+  template:
+    src: "revaliases.j2"
+    dest: "/etc/ssmtp/revaliases"
+    owner: "root"
+    group: "root"
+    mode: "u=rw,g=r,o=r"
+

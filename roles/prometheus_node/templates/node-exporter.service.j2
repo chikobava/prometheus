@@ -1,0 +1,11 @@
+[Unit]
+Description=Node exporter service
+After=network.target
+
+[Service]
+User={{ nodexp_user }}
+ExecStart={{ nodexp_bin_dir }}/node_exporter --collector.systemd --collector.textfile.directory {{ nodexp_conf_dir }}
+Type=simple
+
+[Install]
+WantedBy=multi-user.target

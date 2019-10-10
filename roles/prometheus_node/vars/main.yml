@@ -1,0 +1,2 @@
+nodexp_service_dir: /etc/systemd/system
+nodexp_service_name: node-exporter.service

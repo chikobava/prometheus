@@ -1,0 +1,14 @@
+all:
+  hosts:
+      master:
+      node1:
+      node2:
+  children:
+    prom_servers:
+      hosts:
+        master:
+    prom_nodes:
+      hosts:
+        master:
+        node1:
+        node2:

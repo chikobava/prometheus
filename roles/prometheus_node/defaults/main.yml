@@ -1,0 +1,8 @@
+nodexp_conf_dir: /etc/node-exporter
+nodexp_home: /var/lib/node-exporter
+nodexp_user: root
+nodexp_download_dir: /tmp/node-exporter
+nodexp_bin_dir: /opt/node-exporter
+nodexp_download_checksum: sha256:7ffb3773abb71dd2b2119c5f6a7a0dbca0cff34b24b2ced9e01d9897df61a127
+nodexp_download_url: https://github.com/prometheus/node_exporter/releases/download/v0.15.1/node_exporter-0.15.1.linux-amd64.tar.gz
+nodexp_extract_folder: /tmp/node_exporter_extracted 

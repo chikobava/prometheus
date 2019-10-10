@@ -1,0 +1,11 @@
+grafana_repo_dir: /etc/yum.repos.d
+grafana_address: "0.0.0.0"
+grafana_port: 3000
+grafana_home_dir: /var/lib/grafana
+grafana_conf_dir: /etc/grafana
+grafana_service_name: grafana-server.service
+grafana_webinterface_user: admin
+grafana_webinterface_user_password: admin
+
+grafana_url: "http://{{ grafana_address }}:{{ grafana_port }}"
+grafana_domain: "{{ ansible_fqdn | default(ansible_host) | default('localhost') }}"

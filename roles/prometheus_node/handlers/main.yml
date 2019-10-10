@@ -1,0 +1,14 @@
+- name: reload node-exporter service definition
+  become: True
+  systemd:
+    name: "{{ nodexp_service_name }}"
+    state: restarted
+    enabled: True
+    daemon_reload: yes
+    
+- name: restart node-exporter service
+  become: True
+  systemd: 
+    name: "{{ nodexp_service_name }}"
+    state: restarted
+    enabled: True

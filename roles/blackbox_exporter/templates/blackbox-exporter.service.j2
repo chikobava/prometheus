@@ -1,0 +1,11 @@
+[Unit]
+Description=blackbox-exporter service
+After=network.target
+
+[Service]
+ExecStart={{ blackbox_bin_dir }}/blackbox_exporter --config.file={{ blackbox_conf_dir }}/blackbox-exporter.yml
+
+Type=simple
+
+[Install]
+WantedBy=multi-user.target

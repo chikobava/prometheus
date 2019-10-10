@@ -1,0 +1,2 @@
+asrnode_excluded_network_interfaces: ['lo','virbr0','docker0','virbr0-nic']
+

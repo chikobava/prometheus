@@ -1,0 +1,59 @@
+groups:
+- name: alerting_default
+  rules:
+  - alert: host_down
+    expr: probe_success{service="ping"} == 0
+    for: 10s
+    labels:
+      instance: '{{ $labels.instance }}:9100'
+      type: host_availability
+    annotations:
+      description: ' {{ $labels.instance }} is unavailable'
+      summary: Instance {{ $labels.instance }} is down for more than 10 seconds
+  - alert: docker_service_down
+    expr: node_systemd_unit_state{name="docker.service",state="active"} == 0
+    for: 5m
+    labels:
+      type: service_availability
+    annotations:
+      description: Docker service has been down for more than 10 seconds on {{ $labels.instance
+        }}
+      summary: Docker service is down on {{ $labels.instance }}
+  - alert: ssh_service_down
+    expr: probe_success{service="ssh"} == 0
+    for: 5m
+    labels:
+      instance: '{{ $labels.instance }}:9100'
+      type: service_availability
+    annotations:
+      description: ' {{ $labels.instance }} ssh service has been down for more than
+        10 seconds'
+      summary: SSH service is down on {{ $labels.instance }} for more than 10 seconds
+  - alert: memory_available_low
+    expr: ((node_memory_MemAvailable / node_memory_MemTotal) * 100) <= 10
+    for: 5m
+    labels:
+      type: hardware_issue
+    annotations:
+      description: ' Not enough free memory on {{ $labels.instance }} '
+      summary: ' Low available memory on  {{ $labels.instance }} (less then 10%) '
+  - alert: disk_space_available_low
+    expr: node_filesystem_avail{device=~"/dev/.*"} / node_filesystem_size{device=~"/dev/.*"}
+      * 100 <= 10
+    for: 5m
+    labels:
+      type: hardware_issue
+    annotations:
+      description: ' Not enough disk space on: {{ $labels.instance }}; device: {{
+        $labels.device }}; mountpoint: {{ $labels.mountpoint  }} '
+      summary: ' Low available disk space on:  {{ $labels.instance }} (less then 10%);
+        mountpoint: {{  $labels.mountpoint }}; device: {{ $labels.device }} '
+  - alert: cpu_load_critical
+    expr: ((node_load5 * 100) / node_number_cpu_cores) >= 90
+    for: 30m
+    labels:
+      type: hardware_issue
+    annotations:
+      description: ' Node {{ $labels.instance }} has been under heavy load since 30
+        minutes '
+      summary: ' High load on {{ $labels.instance }} for more than 30 minutes '

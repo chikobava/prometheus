@@ -1,0 +1,43 @@
+- name: Create folder for custom ansible facts
+  become: true
+  file:
+    path: "{{ prom_ansible_facts }}"
+    state: "directory"
+    owner: root
+    group: root
+    mode: "u=rwx,g=rwx,o=rx"
+
+- name: Create folder for custom ansible facts
+  become: true
+  file:
+    path: "{{ prom_nvidia_folder }}"
+    state: "directory"
+    owner: root
+    group: root
+    mode: "u=rwx,g=rwx,o=rx"
+
+
+- name: copy nvidia script and nvidia library to remote host
+  become: true
+  copy:
+    src: "files/{{ item }}"
+    dest: "{{ prom_nvidia_folder }}"
+    owner: root
+    group: root
+    mode: 0755
+  with_items:
+    - nvidia_facts.py
+    - pynvml.py
+    - nvidia_check.py
+
+- name: execute nvidia script to gather info about GPUs
+  become: true
+  command: ./nvidia_facts.py
+  args:
+    chdir: "{{ prom_nvidia_folder }}"
+
+- name: add nvidia check to cron
+  become: true
+  cron:
+    name: "check nvidia gpu"
+    job: "{{ prom_nvidia_folder }}/nvidia_check.py &> /dev/null"

@@ -1,0 +1,9 @@
+node_number_cpu_cores {{ ansible_processor_vcpus }}
+{% if ansible_fqdn in groups['prom_servers'] %}
+#TYPE prom_server_overall_number_of_nodes counter
+prom_server_overall_number_of_nodes {{ groups['prom_nodes'] | length }}
+#TYPE prom_server_overall_number_of_docker_nodes counter
+prom_server_overall_number_of_docker_nodes {{ groups['prom_docker_nodes'] | length }}
+#TYPE prom_server_overall_number_of_servers counter
+prom_server_overall_number_of_servers {{ groups['prom_servers'] | length }}
+{% endif %}

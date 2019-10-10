@@ -1,0 +1,111 @@
+- name: Download Prometheus
+  local_action: get_url
+    url="{{ prom_download_url }}"
+    dest="{{ prom_download_dir }}"
+    checksum="{{ prom_download_checksum }}"
+
+- name: Create folder to unpack Prometheus
+  local_action: file
+    path={{ prom_extract_folder }}
+    state="directory"
+
+- name: Unpack Prometheus
+  local_action: command tar -xf "{{ prom_download_dir }}" -C "{{ prom_extract_folder }}" --strip-components=1 --overwrite
+
+- name: Ensure that all necessary bindings for python are installed
+  become: true
+  dnf:
+    state: latest
+    name: "{{ item }}"
+  with_items:
+    - libselinux-python
+    - python-firewall
+  when: ansible_distribution == "Fedora"
+
+- name: Create Prometheus user
+  become: true
+  user: 
+    name: "{{ prom_user  }}"
+    shell: "/sbin/nologin"
+    state: present
+    home: "{{ prom_home }}"
+
+- name: Create Prometheus bin directory
+  become: true
+  file:
+    path: "{{ prom_bin_dir }}"
+    state: directory
+    owner: "{{ prom_user }}"
+
+- name: Create directory to store prometheus data
+  become: true
+  file:
+    path: "{{ prom_home }}/prom_data"
+    state: directory
+    owner: "{{ prom_user }}"
+    group:  "{{ prom_user }}"
+    mode: "u=rwx,g=rwx,o=r"
+  notify: restart prometheus service
+
+- name: Copy Prometheus to remote host
+  become: true
+  copy:
+    src: "{{ prom_extract_folder }}/"
+    dest: "{{ prom_bin_dir }}"
+    owner: "{{ prom_user }}"
+    group:  "{{ prom_user }}"
+    mode: "u=rwx,g=rwx,o=r"
+
+- name: Create Prometheus configuration directory
+  become: true
+  file:
+    path: "{{ prom_conf_dir }}"
+    state: directory
+    owner: "{{ prom_user }}"
+    mode: "u=rwx,g=rwx,o=r"
+
+- name: Copy prometheus service definition
+  become: true
+  template:
+    src: "prometheus.service.j2"
+    dest: "{{ prom_service_dir }}/{{ prom_service_name }}"
+    owner: root
+    group: root
+    mode: "u=rw,g=r,o=r"
+  notify: reload prometheus.service definition
+  tags:
+    - prometheus_server_update_config
+
+- name: Copy prometheus configuration
+  become: true
+  template:
+    src: "prometheus.yml.j2"
+    dest: "{{ prom_conf_dir }}/prometheus.yml"
+    owner: "{{ prom_user }}"
+    group: "{{ prom_user }}"
+    mode: "u=rw,g=r,o=r"
+  notify: restart prometheus service
+  tags: 
+    - prometheus_server_update_config
+      
+- name: Copy alert rules for alertmanager
+  become: true
+  copy:
+    src: "alerting_rules/{{ item }}"
+    dest: "{{ prom_conf_dir }}/{{ item }}"
+    owner: "{{ prom_user }}"
+    group: "{{ prom_user }}"
+    mode: "u=rw,g=r,o=r"
+  with_items: "{{ prom_alertmanager_rules }}"
+  notify: restart prometheus service
+  tags: 
+    - prometheus_server_update_config
+     
+- name: Enable firewall ports for Prometheus Server
+  become: true
+  ignore_errors: true
+  firewalld:
+    immediate: true
+    port: "{{ prom_port }}/tcp"
+    permanent: true
+    state: enabled

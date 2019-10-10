@@ -1,0 +1,13 @@
+[Unit]
+Description=Prometheus server service
+After=network.target
+
+[Service]
+User={{ alertmanager_user }}
+ExecStart={{ alertmanager_bin_dir }}/alertmanager \
+	-config.file={{ alertmanager_conf_dir }}/alertmanager.yml \
+	-storage.path={{ alertmanager_home }}/alertmanager_data
+Type=simple
+
+[Install]
+WantedBy=multi-user.target

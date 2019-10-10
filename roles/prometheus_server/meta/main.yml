@@ -1,0 +1,4 @@
+dependencies:
+  - role: blackbox_exporter 
+  - role: alertmanager
+  - role: grafana_server

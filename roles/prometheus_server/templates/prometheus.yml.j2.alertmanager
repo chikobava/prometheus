@@ -1,0 +1,87 @@
+# my global config
+global:
+  scrape_interval:     15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+  evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
+  # scrape_timeout is set to the global default (10s).
+
+# Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
+rule_files:
+{%-for rules in prom_alertmanager_rules %} 
+        - rules
+{%-endfor%}
+
+# A scrape configuration containing exactly one endpoint to scrape:
+# Here it's Prometheus itself.
+scrape_configs:
+  # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
+# the 'prometheus' job runs only on the prom_server and monitors it's state (prometheus_server_overview dashboard in the grafana server role)
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: 
+{%-for host in groups['prom_servers'] %} 
+        - {{host}}:{{ prom_port }}
+{%-endfor%}
+
+        labels: 
+          group: 'server'
+
+# the node-exporter service, which is required for the node-exporter job runs on all nodes, which prometheus_node role applies to; (single_host_overview dashboard in the grafana server role)
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: 
+{%-for host in groups['prom_nodes'] %} 
+        - {{host}}:{{ prom_node_port }}
+{%-endfor%}
+
+        labels:
+          group: 'nodes'
+
+# the blackbox-ping service which is required for the blackbox-exporter;  runs only on the prom_sever, the job is applied to every node 
+# checks whether node is 'pingable'; sends an icmp echo request to each host in the specified group (prom_nodes)
+  - job_name: 'blackbox-ping'
+    metrics_path: /probe
+    params:
+      module: [ping]
+    static_configs:
+      - targets: 
+{%-for host in groups['prom_nodes'] %} 
+        - {{host}}
+{%-endfor%}
+
+        labels:
+          service: ping
+
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__address__]
+        target_label: instance
+      - target_label: __address__
+        replacement: localhost:{{ prom_blackbox_port }}
+
+# the blackbox-ssh service which is required for the blackbox-eoxporter job; runs only on the prom_sever, the job is applied to every node
+# checks whether ssh is available; this doesn't check whether it is running, it checks whether it is accessible; i.e. if port is open, service is running and 
+# allows connections
+  - job_name: 'blackbox-ssh'
+    metrics_path: /probe
+    params:
+      module: [ssh_banner]
+    static_configs:
+      - targets: 
+{%-for host in groups['prom_nodes'] %} 
+        - {{host}}
+{%-endfor%}
+
+        labels:
+          service: ssh
+
+    relabel_configs:
+      - source_labels: [__address__]
+        regex: (.*)(:.*)?
+        replacement: ${1}:22
+        target_label: __param_target
+      - source_labels: [__address__]
+        target_label: instance
+      - target_label: __address__
+        replacement: localhost:{{ prom_blackbox_port }}
+

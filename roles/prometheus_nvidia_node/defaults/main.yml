@@ -1,0 +1,3 @@
+prom_nvidia_folder: /usr/local/bin/prom_nvidia
+prom_ansible_facts: /etc/ansible/facts.d
+

@@ -1,0 +1,31 @@
+prom_conf_dir: /etc/prometheus
+prom_home: /var/lib/prometheus
+prom_user: prometheus
+prom_download_dir: /tmp/prometheus
+prom_bin_dir: /opt/prometheus
+prom_port: 9090
+prom_node_port: 9100
+prom_blackbox_port: 9115
+prom_nodes_group: prom_nodes
+prom_blackbox_nodes_group: blackbox_nodes
+prom_download_checksum: sha256:e12917b25b32980daee0e9cf879d9ec197e2893924bd1574604eb0f550034d46
+prom_download_url: https://github.com/prometheus/prometheus/releases/download/v2.0.0/prometheus-2.0.0.linux-amd64.tar.gz 
+prom_extract_folder: /tmp/prometheus_extracted
+ 
+# the rest of the role is responsible for configuration of the prometheus server to use alertmanager
+# by default alertmanager and prometheus should be installed on the same system
+
+# this flag defines, wheter alerting should be enabled on the prometheus server
+# if set to 'enabled' - the role will also fetch and install alertmanager role, if not already installed
+
+# port defines port on which alertmanager is listening - its 9093 
+# host is localhost in this configuration
+
+prom_alertmanager_port: 9093
+prom_alertmanager_host: localhost
+
+# put names of your rule file, and add them into prometheus_server/files/alerting_rules directory
+# by default we have only one file in the role, the 'alertrules' file;
+
+prom_alertmanager_rules:
+  - alerting_default.yml

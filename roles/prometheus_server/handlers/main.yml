@@ -1,0 +1,14 @@
+- name: reload prometheus.service definition
+  become: true
+  systemd:
+    name: "{{ prom_service_name }}"
+    state: restarted
+    enabled: true
+    daemon_reload: yes
+
+- name: restart prometheus service
+  become: true
+  systemd: 
+    name: "{{ prom_service_name }}"
+    state: restarted
+    enabled: true

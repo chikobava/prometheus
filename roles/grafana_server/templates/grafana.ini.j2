@@ -1,0 +1,21 @@
+# {{ ansible_managed }}
+# More informations:
+# http://docs.grafana.org/installation/configuration
+# https://github.com/grafana/grafana/blob/master/conf/sample.ini
+
+app_mode = production
+
+[server]
+
+# The public facing domain name used to access grafana from a browser
+domain = {{ grafana_domain }}
+
+# The ip address to bind to, empty will bind to all interfaces
+http_addr = {{ grafana_address }}
+
+# The http port  to use
+http_port = {{ grafana_port }}
+
+# The full public facing url you use in browser, used for redirects and emails
+# If you use reverse proxy and sub path specify full url (with sub path)
+root_url = {{ grafana_url }}

@@ -1,0 +1,14 @@
+- name: reload blackbox-exporter service definition
+  become: true
+  systemd:
+    name: "{{ blackbox_service_name }}"
+    state: restarted
+    enabled: true
+    daemon_reload: yes
+    
+- name: restart blackbox-exporter service
+  become: true
+  systemd: 
+    name: "{{ blackbox_service_name }}"
+    state: restarted
+    enabled: true

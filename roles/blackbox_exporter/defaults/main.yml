@@ -1,0 +1,12 @@
+blackbox_conf_dir: /etc/blackbox_exporter
+blackbox_home: /var/lib/prometheus
+blackbox_user: prometheus
+blackbox_download_dir: /tmp/blackbox_exporter
+blackbox_bin_dir: /opt/blackbox_exporter
+blackbox_port: 9115
+blackbox_nodes_group: blackbox_nodes
+blackbox_download_checksum: sha256:2550e6b2bffec48e742cd47e3873742c51cf3a979dbe5ea2bf228e8c135aedf2
+blackbox_download_url: https://github.com/prometheus/blackbox_exporter/releases/download/v0.10.0/blackbox_exporter-0.10.0.linux-amd64.tar.gz
+blackbox_extract_folder: /tmp/blackbox_exporter_extracted
+
+

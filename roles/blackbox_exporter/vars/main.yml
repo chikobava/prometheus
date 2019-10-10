@@ -1,0 +1,2 @@
+blackbox_service_dir: /etc/systemd/system
+blackbox_service_name: blackbox-exporter.service

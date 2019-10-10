@@ -1,0 +1,3 @@
+- hosts: prom_nvidia_nodes
+  roles:
+    - prometheus_nvidia_node

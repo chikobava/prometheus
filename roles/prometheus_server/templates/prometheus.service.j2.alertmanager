@@ -1,0 +1,14 @@
+[Unit]
+Description=Prometheus server service 
+After=network.target alertmanager.service
+
+[Service]
+User={{ prom_user }}
+ExecStart={{ prom_bin_dir }}/prometheus \
+	-config.file={{ prom_conf_dir }}/prometheus.yml \
+	-storage.local.path={{ prom_home }}/prom_data \
+	-alertmanager.url=http://{{ prom_alertmanager_host }}:{{ prom_alertmanager_port }}
+Type=simple
+
+[Install]
+WantedBy=multi-user.target

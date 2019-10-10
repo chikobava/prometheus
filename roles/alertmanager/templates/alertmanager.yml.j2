@@ -1,0 +1,16 @@
+global:
+  smtp_smarthost: '{{ alertmanager_smtp_smarthost }}'
+  smtp_from: '{{ alertmanager_smtp_from }}'
+
+route:
+  group_by: [alertname]     
+  group_wait: {{ alertmanager_group_wait }}
+  group_interval: {{ alertmanager_group_interval }}
+  repeat_interval: {{ alertmanager_repeat_interval }}
+  receiver: alertmanager
+
+receivers:
+- name: alertmanager
+  email_configs:
+  - to: '{{ alertmanager_email_address }}'
+    send_resolved: {{ alertmanager_send_resolved }}

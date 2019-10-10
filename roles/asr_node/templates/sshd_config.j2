@@ -1,0 +1,30 @@
+PasswordAuthentication yes
+PubkeyAuthentication yes
+AuthorizedKeysFile %h/.ssh/authorized_keys
+UsePAM yes
+X11Forwarding yes
+
+AllowGroups {{ ssh_allowed_groups }}    
+PermitRootLogin yes
+
+MaxAuthTries 3
+MaxSessions 5
+
+ChallengeResponseAuthentication no
+KerberosAuthentication yes
+GSSAPIAuthentication yes
+GSSAPICleanupCredentials yes
+
+UsePrivilegeSeparation sandbox
+AcceptEnv 
+Subsystem  sftp /usr/libexec/openssh/sftp-server
+
+Protocol 2
+
+Ciphers {{ ssh_allowed_ciphers }}
+MACs {{ ssh_allowed_macs }}
+KexAlgorithms {{ ssh_allowed_kexalgorithms }}
+
+HostKey /etc/ssh/ssh_host_rsa_key
+HostKey /etc/ssh/ssh_host_ecdsa_key
+HostKey /etc/ssh/ssh_host_ed25519_key

@@ -1,0 +1,47 @@
+- name: Move all available interfaces to the work zone
+  become: true
+  firewalld:
+    immediate: true
+    interface: "{{ item }}"
+    permanent: true
+    zone: work
+    state: enabled
+  with_items:
+    "{{ ansible_interfaces | difference(asrnode_excluded_network_interfaces) }}"
+
+- name: Add mysql service  to firewall
+  become: true
+  firewalld:
+    immediate: true
+    zone: work
+    service: mysql
+    permanent: true
+    state: enabled 
+
+- name: Add apache (httpd) service  to firewall
+  become: true
+  firewalld:
+    immediate: true
+    zone: work
+    service: http
+    permanent: true
+    state: enabled 
+
+- name: Add icinga2-server port to firewall
+  become: true
+  firewalld:
+    immediate: true
+    zone: work
+    port: 5665/tcp
+    permanent: true
+    state: enabled 
+
+- name: Add icinga2-server port to firewall
+  become: true
+  firewalld:
+    immediate: true
+    zone: work
+    port: 9102/tcp
+    permanent: true
+    state: enabled 
+

@@ -1,0 +1,24 @@
+- hosts: prom_nodes
+  roles:
+    - prometheus_node
+
+- name: install nvidia scripts 
+  hosts: prom_nvidia_nodes
+  roles: 
+    - prometheus_nvidia_node
+
+- name: gather facts about the systems
+  hosts: prom_nvidia_nodes
+  tasks:
+    - setup: filter=ansible_local
+      when: groups['prom_nvidia_nodes'] is defined and (groups['prom_nvidia_nodes']|length>0)
+
+- hosts: prom_servers
+  roles:
+    - alertmanager     
+    - grafana_server
+    - blackbox_exporter
+    - prometheus_server
+  tags:
+    - server  
+

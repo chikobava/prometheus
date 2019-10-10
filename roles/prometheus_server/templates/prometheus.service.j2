@@ -1,0 +1,13 @@
+[Unit]
+Description=Prometheus server service
+After=network.target
+
+[Service]
+User={{ prom_user }}
+ExecStart={{ prom_bin_dir }}/prometheus \
+	--config.file={{ prom_conf_dir }}/prometheus.yml \
+	--storage.tsdb.path={{ prom_home }}/prom_data
+Type=simple
+
+[Install]
+WantedBy=multi-user.target

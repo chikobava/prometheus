@@ -1,0 +1,110 @@
+- name: Download alertmanager
+  local_action: get_url
+    url="{{ alertmanager_download_url }}"
+    dest="{{ alertmanager_download_dir }}"
+    checksum="{{ alertmanager_download_checksum }}"
+
+- name: Create folder to unpack alertmanager
+  local_action: file
+    path="{{ alertmanager_extract_folder }}"
+    state="directory"
+
+- name: Unpack alertmanager
+  local_action: command tar -xf "{{ alertmanager_download_dir }}" -C "{{ alertmanager_extract_folder }}" --strip-components=1 --overwrite
+
+- name: Ensure that all necessary bindings for python are installed
+  become: true
+  dnf:
+    state: latest
+    name: "{{ item }}"
+  with_items:
+    - libselinux-python
+    - python-firewall
+  when: ansible_distribution == "Fedora"
+
+- name: Create Prometheus user
+  become: true
+  user: 
+    name: "{{ alertmanager_user  }}"
+    shell: "/sbin/nologin"
+    home: "{{ alertmanager_home }}"
+    state: present
+
+- name: Create alertmanager bin directory
+  become: true
+  file:
+    path: "{{ alertmanager_bin_dir }}"
+    owner: "{{ alertmanager_user }}"
+    group: "{{ alertmanager_user }}"
+    state: directory
+
+- name: Copy alertmanager to remote host
+  become: true
+  copy:
+    src: "{{ alertmanager_extract_folder }}/"
+    dest: "{{ alertmanager_bin_dir }}"
+    owner: "{{ alertmanager_user }}"
+    group:  "{{ alertmanager_user }}"
+    mode: "u=rwx,g=rwx,o=r"
+  notify: restart alertmanager service
+
+- name: Create alertmanager configuration directory
+  become: true
+  file:
+    path: "{{ alertmanager_conf_dir }}"
+    state: directory
+    owner: "{{ alertmanager_user }}"
+    group:  "{{ alertmanager_user }}"
+    mode: "u=rwx,g=rwx,o=r"
+  notify: restart alertmanager service
+
+- name: Create alertmanager home directory
+  become: true
+  file:
+    path: "{{ alertmanager_home }}"
+    state: directory
+    owner: "{{ alertmanager_user }}"
+    group:  "{{ alertmanager_user }}"
+    mode: "u=rwx,g=rwx,o=r"
+  notify: restart alertmanager service
+
+- name: Create directory to store alertmanager data
+  become: true
+  file:
+    path: "{{ alertmanager_home }}/alertmanager_data"
+    state: directory
+    owner: "{{ alertmanager_user }}"
+    group:  "{{ alertmanager_user }}"
+    mode: "u=rwx,g=rwx,o=r"
+  notify: restart alertmanager service
+
+- name: Copy alertmanager configuration
+  become: True
+  template:
+    src: "alertmanager.yml.j2"
+    dest: "{{ alertmanager_conf_dir }}/alertmanager.yml"
+    owner: "{{ alertmanager_user }}"
+    group: "{{ alertmanager_user }}"
+    mode: "u=rw,g=r,o=r"
+  notify: restart alertmanager service
+  tags:
+    - alertmanager_update_config
+
+- name: Copy alertmanager service definition
+  become: true
+  template:
+    src: "alertmanager.service.j2"
+    dest: "{{ alertmanager_service_dir }}/{{ alertmanager_service_name }}"
+    owner: root
+    group: root
+    mode: "u=rw,g=r,o=r"
+  notify: reload alertmanager service definition
+
+- name: Enable firewall ports for the alertmanager service
+  become: true
+  ignore_errors: true
+  firewalld:
+    immediate: true
+    port: 9093/tcp
+    permanent: true
+    state: enabled

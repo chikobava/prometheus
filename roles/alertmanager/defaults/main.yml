@@ -1,0 +1,33 @@
+alertmanager_conf_dir: /etc/alertmanager
+alertmanager_user: prometheus
+alertmanager_download_dir: /tmp/alertmanager
+alertmanager_bin_dir: /opt/alertmanager
+alertmanager_download_checksum: sha256:ef09b9c9795a7148fd74bb1dcecdd00a4fa25da05a4d2b8517e6ceb5f124e1a8
+alertmanager_download_url: https://github.com/prometheus/alertmanager/releases/download/v0.10.0/alertmanager-0.10.0.linux-amd64.tar.gz 
+alertmanager_extract_folder: /tmp/alertmanager_extracted
+alertmanager_home: /var/lib/prometheus
+
+# Mail server
+alertmanager_smtp_smarthost: mail.dfki.de:25
+alertmanager_smtp_from: 'admin@{{ ansible_hostname }}'
+
+# Email address for alertmanager
+alertmanager_email_address: change_me_please
+
+# Specify whether you want notification if an issue was resolved 
+# (e.g. a service or host is back up)
+alertmanager_send_resolved: true
+
+# When a new group of alerts is created by an incoming alert, wait at
+# least 'group_wait' to send the initial notification.
+# This way ensures that you get multiple alerts for the same group that start
+# firing shortly after another are batched together on the first
+# notification.
+alertmanager_group_wait: 30s
+ 
+# When the first notification was sent, wait 'group_interval' to send a batch
+# of new alerts that started firing for that group.
+alertmanager_group_interval: 5m
+
+# The alert will be sent again after this time
+alertmanager_repeat_interval: 3h
